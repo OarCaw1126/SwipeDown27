@@ -75,7 +75,9 @@ jobs:
           rm -rf master.zip sdks-master
 
       - name: set THEOS env var
-        run: echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
+        run: |
+          echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
+          echo "$GITHUB_WORKSPACE/theos/bin" >> $GITHUB_PATH
 
       - name: install deps
         run: |
@@ -90,12 +92,23 @@ jobs:
           elif [ "${{ matrix.scheme }}" = "roothide" ]; then
             SCHEME_FLAG="THEOS_PACKAGE_SCHEME=roothide"
           fi
-          make clean
-          make package \
-            ARCHS="arm64 arm64e" \
-            TARGET="$DEVICE_TARGET" \
-            FINALPACKAGE=1 \
-            $SCHEME_FLAG
+          
+          if [ -f "Makefile" ]; then
+            make clean
+            make package ARCHS="arm64 arm64e" TARGET="$DEVICE_TARGET" FINALPACKAGE=1 $SCHEME_FLAG
+          elif [ -f "makefile" ]; then
+            make -f makefile clean
+            make -f makefile package ARCHS="arm64 arm64e" TARGET="$DEVICE_TARGET" FINALPACKAGE=1 $SCHEME_FLAG
+          elif [ -f "makefile.yml" ]; then
+            make -f makefile.yml clean
+            make -f makefile.yml package ARCHS="arm64 arm64e" TARGET="$DEVICE_TARGET" FINALPACKAGE=1 $SCHEME_FLAG
+          elif [ -f "Makefile.yml" ]; then
+            make -f Makefile.yml clean
+            make -f Makefile.yml package ARCHS="arm64 arm64e" TARGET="$DEVICE_TARGET" FINALPACKAGE=1 $SCHEME_FLAG
+          else
+            ls -la
+            exit 1
+          fi
 
       - name: upload package (${{ matrix.scheme }})
         uses: actions/upload-artifact@v4
@@ -125,12 +138,7 @@ jobs:
           tag: nightly
           name: "Nightly"
           body: |
-            This build was automatically generated from the latest commit on `main`.
-            
-            **Commit SHA:** ${{ github.sha }}
-            **Triggered by:** @${{ github.actor }}
-            
-            > [!NOTE]
-            > A nightly build is basically the next update partially done. Additionally, this build might have the old version number but the code itself should has the latest commit.
+            Commit SHA: ${{ github.sha }}
+            Triggered by: @${{ github.actor }}
           prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
