@@ -1,0 +1,9 @@
+Package: com.torxed.swipedown27
+Name: SwipeDown27
+Depends: mobilesubstrate (>= 0.9.5000)
+Version: 1.0.0
+Architecture: arm64 arm64e
+Description: Effect Swipe Down For Old Devices
+Maintainer: Torxed
+Author: Torxed
+Section: Tweaks
