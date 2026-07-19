@@ -1,34 +1,55 @@
 #import <UIKit/UIKit.h>
 
-@interface SBHomeScreenViewController : UIViewController
+@interface SBHomeScreenWindow : UIWindow
 @end
 
-%hook SBHomeScreenViewController
+@interface SwipeDownDelegate : NSObject <UIGestureRecognizerDelegate>
+@end
 
-- (void)viewDidLoad {
+@implementation SwipeDownDelegate
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    return YES;
+}
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return YES; 
+}
+@end
+
+static SwipeDownDelegate *gestureDelegate;
+
+%hook SBHomeScreenWindow
+
+- (void)setHidden:(BOOL)hidden {
     %orig;
     
-    UISwipeGestureRecognizer *swipeDown = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleLiquidSwipe:)];
-    swipeDown.direction = UISwipeGestureRecognizerDirectionDown;
-    
-    [self.view addGestureRecognizer:swipeDown];
+    if (!hidden && ![self viewWithTag:2600]) {
+        if (!gestureDelegate) {
+            gestureDelegate = [[SwipeDownDelegate alloc] init];
+        }
+
+        UISwipeGestureRecognizer *swipeDown = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleLiquidSwipe27:)];
+        swipeDown.direction = UISwipeGestureRecognizerDirectionDown;
+        swipeDown.delegate = gestureDelegate;
+        
+        [self addGestureRecognizer:swipeDown];
+    }
 }
 
 %new
-- (void)handleLiquidSwipe:(UISwipeGestureRecognizer *)sender {
+- (void)handleLiquidSwipe27:(UISwipeGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
-        
-        UIView *overlayView = [[UIView alloc] initWithFrame:self.view.bounds];
-        overlayView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.4]; // Fondo oscuro traslúcido
+        if ([self viewWithTag:2600]) return;
+
+        UIView *overlayView = [[UIView alloc] initWithFrame:self.bounds];
+        overlayView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.4];
         overlayView.alpha = 0.0;
-        overlayView.tag = 2600; // Identificador único
+        overlayView.tag = 2600;
         
-        UILabel *clockLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 100, self.view.bounds.size.width, 120)];
+        UILabel *clockLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 100, self.bounds.size.width, 120)];
         clockLabel.text = @"12:30";
         clockLabel.textAlignment = NSTextAlignmentCenter;
-        
-        clockLabel.font = [UIFont fontWithName:@"HelveticaNeue-CondensedBold" size:90]; 
-        clockLabel.textColor = [UIColor systemRedColor]; // Cambiar al color preferido
+        clockLabel.font = [UIFont fontWithName:@"HelveticaNeue-CondensedBold" size:90];
+        clockLabel.textColor = [UIColor systemRedColor];
         
         clockLabel.layer.shadowColor = [UIColor blackColor].CGColor;
         clockLabel.layer.shadowOffset = CGSizeMake(0, 5);
@@ -36,9 +57,9 @@
         clockLabel.layer.shadowRadius = 4.0;
         
         [overlayView addSubview:clockLabel];
-        [self.view addSubview:overlayView];
+        [self addSubview:overlayView];
         
-        overlayView.transform = CGAffineTransformMakeTranslation(0, -self.view.bounds.size.height);
+        overlayView.transform = CGAffineTransformMakeTranslation(0, -self.bounds.size.height);
         
         [UIView animateWithDuration:0.4 
                               delay:0 
@@ -50,13 +71,13 @@
                              overlayView.transform = CGAffineTransformIdentity;
                          } completion:nil];
                          
-        UITapGestureRecognizer *dismissTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissLiquidOverlay:)];
+        UITapGestureRecognizer *dismissTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissLiquidOverlay27:)];
         [overlayView addGestureRecognizer:dismissTap];
     }
 }
 
 %new
-- (void)dismissLiquidOverlay:(UITapGestureRecognizer *)sender {
+- (void)dismissLiquidOverlay27:(UITapGestureRecognizer *)sender {
     UIView *overlayView = sender.view;
     
     [UIView animateWithDuration:0.3 animations:^{
