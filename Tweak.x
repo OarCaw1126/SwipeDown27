@@ -1,3 +1,9 @@
+#import "../LiquidGlass.h"
+#import "../Shared/LGBannerCaptureSupport.h"
+#import "../Shared/LGHookSupport.h"
+#import "../Shared/LGSharedSupport.h"
+#import <QuartzCore/QuartzCore.h>
+#import <objc/runtime.h>
 #import <UIKit/UIKit.h>
 
 @interface SBHomeScreenWindow : UIWindow
@@ -40,11 +46,24 @@ static SwipeDownDelegate *gestureDelegate;
     if (sender.state == UIGestureRecognizerStateEnded) {
         if ([self viewWithTag:2600]) return;
 
-        UIView *overlayView = [[UIView alloc] initWithFrame:self.bounds];
-        overlayView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.4];
-        overlayView.alpha = 0.0;
+        CGPoint wallpaperOrigin = CGPointZero;
+        UIImage *wallpaperSnap = nil;
+        
+        if (NSClassFromString(@"LiquidGlassView") != nil) {
+            wallpaperSnap = LG_getHomescreenSnapshot(&wallpaperOrigin);
+        }
+
+        LiquidGlassView *overlayView = [[LiquidGlassView alloc] initWithFrame:self.bounds 
+                                                                     wallpaper:wallpaperSnap 
+                                                               wallpaperOrigin:wallpaperOrigin];
         overlayView.tag = 2600;
         
+        overlayView.blur = 25.0;
+        overlayView.glassThickness = 4.0;
+        overlayView.refractionScale = 0.15;
+        overlayView.cornerRadius = 0.0; 
+        overlayView.updateGroup = LGUpdateGroupLockscreen;
+
         UILabel *clockLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 100, self.bounds.size.width, 120)];
         clockLabel.text = @"12:30";
         clockLabel.textAlignment = NSTextAlignmentCenter;
@@ -59,6 +78,8 @@ static SwipeDownDelegate *gestureDelegate;
         [overlayView addSubview:clockLabel];
         [self addSubview:overlayView];
         
+        LG_registerGlassView(overlayView, LGUpdateGroupLockscreen);
+        
         overlayView.transform = CGAffineTransformMakeTranslation(0, -self.bounds.size.height);
         
         [UIView animateWithDuration:0.4 
@@ -67,7 +88,6 @@ static SwipeDownDelegate *gestureDelegate;
               initialSpringVelocity:1.0 
                             options:UIViewAnimationOptionCurveEaseInOut 
                          animations:^{
-                             overlayView.alpha = 1.0;
                              overlayView.transform = CGAffineTransformIdentity;
                          } completion:nil];
                          
@@ -78,12 +98,12 @@ static SwipeDownDelegate *gestureDelegate;
 
 %new
 - (void)dismissLiquidOverlay27:(UITapGestureRecognizer *)sender {
-    UIView *overlayView = sender.view;
+    LiquidGlassView *overlayView = (LiquidGlassView *)sender.view;
     
     [UIView animateWithDuration:0.3 animations:^{
-        overlayView.alpha = 0.0;
         overlayView.transform = CGAffineTransformMakeTranslation(0, -overlayView.bounds.size.height);
     } completion:^(BOOL finished) {
+        LG_unregisterGlassView(overlayView, LGUpdateGroupLockscreen);
         [overlayView removeFromSuperview];
     }];
 }
