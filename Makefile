@@ -3,7 +3,7 @@ ARCHS = arm64 arm64e
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = SwipeDown26
+TWEAK_NAME = SwipeDown27
 
 SwipeDown26_FILES = Tweak.x
 SwipeDown26_FRAMEWORKS = UIKit QuartzCore CoreGraphics
