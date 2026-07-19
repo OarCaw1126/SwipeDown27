@@ -1,7 +1,7 @@
-#import "../LiquidGlass.h"
-#import "../Shared/LGBannerCaptureSupport.h"
-#import "../Shared/LGHookSupport.h"
-#import "../Shared/LGSharedSupport.h"
+#import "LiquidGlass.h"
+#import "Shared/LGBannerCaptureSupport.h"
+#import "Shared/LGHookSupport.h"
+#import "Shared/LGSharedSupport.h"
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 #import <UIKit/UIKit.h>
